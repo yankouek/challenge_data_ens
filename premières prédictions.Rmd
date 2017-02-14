@@ -1,0 +1,253 @@
+---
+title: "projet2"
+author: "Tehe Yannick"
+date: "18 novembre 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+
+library(lubridate)
+input_train = read.csv("input_train.csv",sep=",")
+ncol(input_train)
+
+
+library(missForest)
+
+
+input_train = dplyr::mutate(input_train, Id_bat = factor(Id_bat))
+
+
+
+X=missForest(input_train[,-c(1,2,3)],maxiter = 2, ntree = 100)$ximp
+
+for(i in 1:5){
+  u=3+i
+  input_train[,u]=X[,i]
+  
+}
+
+trous2=which(is.na(input_train$x2))
+trous3=which(is.na(input_train$x3))
+
+trous1=which(is.na(input_train$x1))
+
+trous4=which(is.na(input_train$x4))
+
+
+trous5=which(is.na(input_train$x5))
+
+input_train[,1]=hour(input_train$Time)
+
+input_train[,9]=(wday(input_train$Time)==7|wday(input_train$Time)==1)+1
+input_train[,2]=input_train[,9]
+input_train=input_train[,-c(3,9)]
+
+output_train = read.csv("output_train.csv",sep=";")
+for(i in 1:5){
+  u=7+i
+  v=1+i
+  input_train[,u]=output_train[,v]
+  
+}
+
+colnames(input_train)[c(1,8,9,10,11,12)]=c("heure","y1","y2","y3","y4","y5")
+data1=input_train[,-c(9,10,11,12)]
+data2=input_train[,-c(8,10,11,12)]
+data3=input_train[,-c(8,9,11,12)]
+data4=input_train[,-c(8,9,10,12)]
+data5=input_train[,-c(8,9,10,11)]
+
+
+mod1=lm(y1~.,data=data1)
+mod2=lm(y2~.,data=data2)
+mod3=lm(y3~.,data=data3)
+mod4=lm(y4~.,data=data4)
+mod5=lm(y5~.,data=data5)
+
+write.csv(input_train,file="input_train_fin.csv")
+
+library(e1071)
+
+
+
+
+library(randomForest)
+set.seed(123)
+
+mod1_bis=randomForest(data1$y1~ .,
+                       data1[,-c(8)],
+                       mtry = 7, # number of predictors to use for generation of tree 
+                       ntree = 300, # number of trees to create
+                       importance = TRUE)
+
+mod2_bis=randomForest(data2$y2~ .,
+                       data2[,-c(8)],
+                       mtry = 7, # number of predictors to use for generation of tree 
+                       ntree = 300, # number of trees to create
+                       importance = TRUE)
+
+                       
+mod3_bis=randomForest(data3$y3~ .,
+                       data3[,-c(8)],
+                       mtry = 7, # number of predictors to use for generation of tree 
+                       ntree = 300, # number of trees to create
+                       importance = TRUE)
+
+
+mod4_bis=randomForest(data4$y4~ .,
+                       data4[,-c(8)],
+                       mtry = 7, # number of predictors to use for generation of tree 
+                       ntree = 300, # number of trees to create
+                       importance = TRUE)
+
+mod5_bis=randomForest(data5$y5~ .,
+                       data5[,-c(8)],
+                       mtry = 6, # number of predictors to use for generation of tree 
+                       ntree = 300, # number of trees to create
+                       importance = TRUE)
+
+
+
+
+#library(xgboost)
+#dtest <- xgb.DMatrix(as.matrix(data1[,-c(8)]), label = data1$y1)
+
+
+
+#mod1_tris= xgboost(data = as.matrix(data1[,-c(8)]), label = data1$y1, max.depth = 2, nround = 200000,objective = "reg:linear")
+
+#mod2_tris= xgboost(data = as.matrix(data2[,-c(8)]), label = data2$y2, max.depth = 2, nround = 200000,objective = "reg:linear")
+
+#mod3_tris= xgboost(data = as.matrix(data3[,-c(8)]), label = data3$y3, max.depth = 2, nround = 200000,objective = "reg:linear")
+
+#mod4_tris= xgboost(data = as.matrix(data4[,-c(8)]), label = data4$y4, max.depth = 2, nround = 200000,objective = "reg:linear")
+
+#mod5_tris= xgboost(data = as.matrix(data5[,-c(8)]), label = data5$y5, max.depth = 2, nround = 200000,objective = "reg:linear")
+library(gbm)
+
+#mod1_tris=gbm(formula = y1~., distribution = "gaussian", data = data1, n.trees = 20000, shrinkage = 0.001, bag.fraction = 0.5, cv.folds=3, n.cores = 2)
+
+y_pred=predict(mod1_tris,data1[,-c(8)],n.trees=20000)
+
+
+
+
+#y_pred=predict(mod1_tris1,data1[,-c(8)],n.trees=100)
+mean((y_pred-data1$y1)^2)
+
+u1=predict(mod1_bis,data1[,-c(8)])
+mean((u1-data1$y1[])^2)
+
+u2=predict(mod2_bis,data2[,-c(8)])
+mean((u2-data2$y2)^2)
+
+u3=predict(mod3_bis,data3[,-c(8)])
+mean((u3-data3$y3)^2)
+
+u4=predict(mod4_bis,data4[,-c(8)])
+mean((u4-data4$y4)^2)
+
+u5=predict(mod5_bis,data5[,-c(8)])
+mean((u5-data5$y5)^2)
+
+
+
+```
+
+prediction sur input test
+```{r}
+library(missForest)
+
+
+library(lubridate)
+
+input_test = read.csv("input_test.csv",sep=",")
+
+input_test = dplyr::mutate(input_test, Id_bat = factor(Id_bat))
+
+
+X=missForest(input_test[,-c(1,2,3)],maxiter = 2, ntree = 100)$ximp
+
+for(i in 1:5){
+  u=3+i
+  input_test[,u]=X[,i]
+  
+}
+
+v1=which(input_test$Id_bat==1)
+v2=which(input_test$Id_bat==2)
+v3=which(input_test$Id_bat==3)
+v4=which(input_test$Id_bat==4)
+
+
+
+input_test[,1]=hour(input_test$Time)
+wday(input_test$Time)
+input_test[,9]=(wday(input_test$Time)==7|wday(input_test$Time)==1)+1
+input_test[,2]=input_test[,9]
+input_test=input_test[,-c(3,9)]
+
+colnames(input_test)=colnames(data1)[1:7]
+
+
+
+y1=predict(mod1_bis,input_test)
+y2=predict(mod2_bis,input_test)
+y3=predict(mod3_bis,input_test)
+y4=predict(mod4_bis,input_test)
+y5=predict(mod5_bis,input_test)
+
+
+
+
+#y1=predict(mod1_tris,as.matrix(input_test))
+#y2=predict(mod2_tris,as.matrix(input_test))
+#y3=predict(mod3_tris,as.matrix(input_test))
+#y4=predict(mod4_tris,as.matrix(input_test))
+#y5=predict(mod5_tris,as.matrix(input_test))
+
+#y1=(y1>0)*y1+(y1<=0)*predict(mod1_bis,input_test)
+#y2=(y2>0)*y2+(y2<=0)*predict(mod2_bis,input_test)
+#y3=(y3>0)*y3+(y3<=0)*predict(mod3_bis,input_test)
+#y4=(y4>0)*y4+(y4<=0)*predict(mod4_bis,input_test)
+#y5=(y5>0)*y5+(y5<=0)*predict(mod5_bis,input_test)
+
+#y3[v1]=0
+#y3[v2]=0
+#y3[v4]=0
+
+#y2[v4]=0
+
+#y4[v3]=0
+
+
+output_test=matrix(0,nrow=length(y1),ncol=6)
+
+output_test[,1]=11708:14136
+
+output_test[,2]=y1
+
+output_test[,3]=y2
+output_test[,4]=y3
+
+output_test[,5]=y4
+
+output_test[,6]=y5
+
+
+
+colnames(output_test)=c("Id","y1","y2","y3","y4","y5")
+
+write.csv(output_test,file="essairanaméliore.csv")
+
+```
+
+```{r}
+
+

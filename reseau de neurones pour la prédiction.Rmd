@@ -1,0 +1,75 @@
+---
+title: "projet3"
+author: "Tehe Yannick"
+date: "19 novembre 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+library(lubridate)
+input_train = read.csv("input_train.csv",sep=",")
+ncol(input_train)
+
+
+library(missForest)
+
+
+
+
+
+input_train = dplyr::mutate(input_train, Id_bat = factor(Id_bat))
+X=missForest(input_train[,-c(1,2,3)],maxiter = 2, ntree = 20)$ximp
+
+for(i in 1:5){
+  u=3+i
+  input_train[,u]=X[,i]
+  
+}
+
+
+trous2=which(is.na(input_train$x2))
+trous3=which(is.na(input_train$x3))
+
+trous1=which(is.na(input_train$x1))
+
+trous4=which(is.na(input_train$x4))
+
+
+trous5=which(is.na(input_train$x5))
+
+input_train[,1]=hour(input_train$Time)
+input_train[,9]=(wday(input_train$Time)==7|wday(input_train$Time)==6)+1
+input_train[,2]=input_train[,9]
+input_train=input_train[,-c(3,9)]
+
+output_train = read.csv("output_train.csv",sep=";")
+for(i in 1:5){
+  u=7+i
+  v=1+i
+  input_train[,u]=output_train[,v]
+  
+}
+
+colnames(input_train)[c(1,8,9,10,11,12)]=c("heure","y1","y2","y3","y4","y5")
+data1=input_train[,-c(9,10,11,12)]
+data2=input_train[,-c(8,10,11,12)]
+data3=input_train[,-c(8,9,11,12)]
+data4=input_train[,-c(8,9,10,12)]
+data5=input_train[,-c(8,9,10,11)]
+
+```
+
+
+```{r}
+library(nnet)
+
+model1= nnet(data2$y2~ .,data2,size=12)
+pred=predict(model1,data2)
+which(pred==0)
+mean((pred-data2$y2)^2)
+```
